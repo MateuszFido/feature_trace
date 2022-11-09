@@ -1,6 +1,5 @@
 # feature_trace
 
-'''
 Created on: 2022-Nov-08
 Last changes on: 2022-Nov-09
 
@@ -15,4 +14,3 @@ References:
 ===========
 Python Code "preprocess.py" by Mateusz Fido
 https://pyteomics.readthedocs.io/en/latest/index.html
-'''
