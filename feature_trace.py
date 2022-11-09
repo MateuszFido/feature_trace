@@ -1,6 +1,6 @@
 '''
 Created on: 2022-Nov-08
-Last changes on:
+Last changes on: 2022-Nov-09
 
 @author: Mateusz Fido, mateusz.fido@org.chem.ethz.ch
 ETH Zürich
@@ -21,6 +21,7 @@ import numpy as np
 from pyteomics import mzml
 import matplotlib.pyplot as plt
 from preprocess import read_mzml
+import csv
 
 st = time.time()    # log execution time
 
@@ -67,16 +68,14 @@ def trace_features(file, features):
     
     Returns: None
     '''
-    
     tic = []                            # Placeholder data structures 
-    fig, ax = plt.subplots(2, 1)
-    legend = []
+    data = []
+    # fig, ax = plt.subplots(2, 1)
 
     for feature in features:            # Iterate over all features in list 
-
         scans = mzml.MzML(str(PATH / file))
-
         feature_ints = []
+
         peak_idx = find_nearest(MZ_AXIS, feature)   # Find the closest value on the MZ_AXIS 
         
         for scan in scans:
@@ -84,14 +83,18 @@ def trace_features(file, features):
                 tic.append(scan['total ion current'])
             mz_array = np.ndarray.tolist(scan['m/z array'])
             intensity_array = np.ndarray.tolist(scan['intensity array'])
-            int_interp = np.interp(MZ_AXIS, mz_array, intensity_array, left = 0, right = 0)
-            int_range = int_interp[peak_idx - 5 : peak_idx + 5]
+            int_interp = np.interp(MZ_AXIS, mz_array, intensity_array, left = 0, right = 0) # Interpolate intensity linearly for each scan from mz_array and intensity_array onto MZ_AXIS
+            int_range = int_interp[peak_idx - 5 : peak_idx + 5] # Get a hardcoded range for intensities (same index as MZ_AXIS) so that the function does not miss the peak 
             feature_ints.append(max(int_range))
 
-        ax[1].plot(feature_ints)
-        legend.append(feature_ints)
+        feature_ints.insert(0, feature)
+        data.append(feature_ints)
+    #       ax[1].plot(feature_ints))
+    
+    data.insert(0, tic)
+    return data
 
-    '''Graphing interface'''
+    '''Graphing interface
 
     ax[0].plot(tic, color='red')
     ax[0].set_title("Total Ion Current")
@@ -102,7 +105,7 @@ def trace_features(file, features):
     plt.tight_layout()
     plt.show()
 
-    ''''''
+    '''
 
 def main():
     '''
@@ -110,19 +113,31 @@ def main():
     Input: None
     Returns: None
     '''
-    
+
+    path_to_save = PATH / "Traces/"
+        
+    try:
+        os.mkdir(path_to_save)
+    except:
+        print("Directory already exists")   # Check if folder already exists, if not, create it
+
     filelist = read_mzml(PATH)
     count = 1
 
     for file in filelist:
+
         print(f"Tracing features for file {count} out of {len(filelist)}: {file}...")
         count += 1
 
         if "_pos" in str(file):
-            trace_features(PATH / file, FEATURES_POS)
+            result = trace_features(PATH / file, FEATURES_POS)
         else:
-            trace_features(PATH / file, FEATURES_NEG)
-
+            result = trace_features(PATH / file, FEATURES_NEG)
+        
+        with open(path_to_save / "{}.csv".format(file).replace('.mzml', ""), "w+") as trace_csv:
+            writer = csv.writer(trace_csv)
+            for item in result:
+                writer.writerow(item)
 
 main()
 
