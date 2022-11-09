@@ -8,7 +8,8 @@ ETH Zürich
 
 This script iterates over files in a list of .mzml files,
 resamples their intensities over a common m/z axis and then
-looks for and plots time-traces of a given set of features.
+writes them into .csv files together with the total ion current
+and the m/z of the feature on index 0.
 
 References:
 ===========
